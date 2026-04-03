@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/AppServ/MySQL/bin/mysql.exe\" -u root -proot -e \"CREATE DATABASE IF NOT EXISTS impulsa_local CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")",
+      "Bash(\"C:/AppServ/MySQL/bin/mysql.exe\" -u root -e \"CREATE DATABASE IF NOT EXISTS impulsa_local CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")",
+      "Bash(\"C:/Users/USER/.config/herd/bin/php.bat\" artisan:*)",
+      "Bash(\"C:/AppServ/MySQL/bin/mysql.exe\" -u root --host=127.0.0.1 --port=3307 -p04341631 -e \"CREATE DATABASE IF NOT EXISTS impulsa_local CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")"
+    ]
+  }
+}
