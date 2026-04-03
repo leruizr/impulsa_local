@@ -20,7 +20,7 @@ Plataforma web desarrollada con **Laravel** para la digitalizacion y gestion de 
 1. **Clonar el repositorio:**
 
    ```bash
-   git clone <url-del-repositorio> impulsa_local
+   git clone https://github.com/leruizr/impulsa_local.git
    cd impulsa_local
    ```
 
