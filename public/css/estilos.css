@@ -1,9 +1,13 @@
+/* Hace que el body ocupe al menos toda la pantalla verticalmente
+   y organiza el contenido en columna (navbar, main y footer apilados) */
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
+/* Permite que el contenido principal crezca y empuje el footer
+   hacia la parte inferior de la pantalla (footer pegado al fondo) */
 main {
     flex: 1;
 }

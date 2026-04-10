@@ -1,6 +1,8 @@
+{{-- Hereda la estructura base definida en layout.blade.php --}}
 @extends('layout')
 
 @section('content')
+{{-- Página de bienvenida con descripción del sistema y accesos rápidos --}}
 <div class="text-center py-5">
     <h2 class="mb-4">Bienvenido a Impulsa Local</h2>
     <p class="lead mb-4">
@@ -13,6 +15,7 @@
         e inscribirlos en programas de formación que fortalezcan sus negocios
         y contribuyan al desarrollo económico local.
     </p>
+    {{-- Botones de acceso rápido a las dos secciones principales --}}
     <div class="mt-4">
         <a href="{{ route('emprendedores.index') }}" class="btn btn-primary btn-lg me-2">Ver Emprendedores</a>
         <a href="{{ route('programas.index') }}" class="btn btn-outline-primary btn-lg">Programas de Formación</a>
