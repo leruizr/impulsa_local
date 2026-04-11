@@ -10,12 +10,19 @@ Plataforma web desarrollada con **Laravel** para la digitalizacion y gestion de 
 
 ### Requisitos previos
 
+Antes de comenzar asegurate de tener instalado en tu equipo:
+
 - **PHP** >= 8.3
 - **Composer** (gestor de dependencias de PHP)
 - **Node.js** y **npm** (para compilar los assets del frontend)
-- **Laravel Herd** (recomendado, ya que el proyecto fue creado con Herd) o cualquier servidor local compatible (XAMPP, Laragon, etc.)
+- **MySQL** (base de datos)
+- **Laravel Herd** (recomendado) o cualquier servidor local compatible (XAMPP, Laragon, etc.)
 
-### Pasos de instalacion
+---
+
+### Opcion A — No tengo el proyecto todavia (primer uso)
+
+Sigue estos pasos si vas a descargar el proyecto por primera vez.
 
 1. **Clonar el repositorio:**
 
@@ -36,52 +43,95 @@ Plataforma web desarrollada con **Laravel** para la digitalizacion y gestion de 
    npm install
    ```
 
-4. **Configurar el archivo de entorno:**
+4. **Crear el archivo de entorno y generar la clave de la aplicacion:**
 
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
 
-   > **Nota:** Configura las credenciales de tu base de datos MySQL en el `.env` antes de continuar:
-   >
-   > ```
-   > DB_CONNECTION=mysql
-   > DB_HOST=127.0.0.1
-   > DB_PORT=3306
-   > DB_DATABASE=impulsa_local
-   > DB_USERNAME=root
-   > DB_PASSWORD=tu_contraseña
-   > ```
-   >
-   > Tambien crea la base de datos en MySQL antes de correr las migraciones:
-   > ```sql
-   > CREATE DATABASE impulsa_local;
-   > ```
+5. **Configurar la base de datos en el archivo `.env`:**
 
-5. **Compilar los assets del frontend:**
+   Abre el archivo `.env` y actualiza estas lineas con tus credenciales de MySQL:
+
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=impulsa_local
+   DB_USERNAME=root
+   DB_PASSWORD=tu_contraseña
+   ```
+
+6. **Crear la base de datos en MySQL:**
+
+   Desde MySQL Workbench, HeidiSQL o la terminal ejecuta:
+
+   ```sql
+   CREATE DATABASE impulsa_local;
+   ```
+
+7. **Ejecutar las migraciones** (crea las tablas en la base de datos):
+
+   ```bash
+   php artisan migrate
+   ```
+
+8. **Compilar los assets del frontend:**
 
    ```bash
    npm run build
    ```
 
-   O para desarrollo con recarga automatica:
-
-   ```bash
-   npm run dev
-   ```
-
-6. **Iniciar el servidor:**
+9. **Iniciar el servidor:**
 
    Si usas **Laravel Herd**, el proyecto se sirve automaticamente en `http://impulsa_local.test`.
 
-   Si no usas Herd, puedes levantar el servidor integrado de Laravel:
+   Si no usas Herd, ejecuta:
 
    ```bash
    php artisan serve
    ```
 
-   Y acceder en `http://localhost:8000`.
+   Y accede en `http://localhost:8000`.
+
+---
+
+### Opcion B — Ya tengo el proyecto descargado (actualizaciones)
+
+Sigue estos pasos si ya clonaste el proyecto anteriormente y solo quieres actualizar cambios recientes.
+
+1. **Obtener los ultimos cambios del repositorio:**
+
+   ```bash
+   git pull
+   ```
+
+2. **Actualizar dependencias de PHP** (solo si hubo cambios en `composer.json`):
+
+   ```bash
+   composer install
+   ```
+
+3. **Actualizar dependencias de Node** (solo si hubo cambios en `package.json`):
+
+   ```bash
+   npm install
+   ```
+
+4. **Ejecutar migraciones pendientes** (solo si se agregaron nuevas migraciones):
+
+   ```bash
+   php artisan migrate
+   ```
+
+5. **Recompilar los assets** (solo si hubo cambios en CSS o JS):
+
+   ```bash
+   npm run build
+   ```
+
+   > Si el servidor ya estaba corriendo no necesitas reiniciarlo. Con Herd los cambios se reflejan automaticamente.
 
 ---
 
