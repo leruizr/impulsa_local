@@ -43,12 +43,20 @@ Plataforma web desarrollada con **Laravel** para la digitalizacion y gestion de 
    php artisan key:generate
    ```
 
-   > **Nota:** Este proyecto utiliza datos estaticos (no requiere base de datos). Asegurate de que el archivo `.env` tenga los siguientes valores para evitar errores de conexion:
+   > **Nota:** Configura las credenciales de tu base de datos MySQL en el `.env` antes de continuar:
    >
    > ```
-   > SESSION_DRIVER=file
-   > QUEUE_CONNECTION=sync
-   > CACHE_STORE=file
+   > DB_CONNECTION=mysql
+   > DB_HOST=127.0.0.1
+   > DB_PORT=3306
+   > DB_DATABASE=impulsa_local
+   > DB_USERNAME=root
+   > DB_PASSWORD=tu_contraseña
+   > ```
+   >
+   > Tambien crea la base de datos en MySQL antes de correr las migraciones:
+   > ```sql
+   > CREATE DATABASE impulsa_local;
    > ```
 
 5. **Compilar los assets del frontend:**
@@ -91,8 +99,8 @@ A continuacion se listan los archivos donde se encuentra todo lo trabajado para 
 
 | Archivo | Descripcion |
 |---|---|
-| `app/Http/Controllers/EmprendedorController.php` | Logica para listar, crear, editar y eliminar emprendedores. Contiene los datos estaticos de ejemplo |
-| `app/Http/Controllers/ProgramaFormacionController.php` | Logica para listar y crear programas de formacion. Contiene los datos estaticos de ejemplo |
+| `app/Http/Controllers/EmprendedorController.php` | Logica para listar, crear, editar y eliminar emprendedores. Lee y escribe en la base de datos a traves del modelo Emprendedor |
+| `app/Http/Controllers/ProgramaFormacionController.php` | Logica para listar y crear programas de formacion. Contiene datos estaticos de ejemplo (pendiente conectar a BD) |
 
 ### Modelos
 
@@ -119,13 +127,68 @@ A continuacion se listan los archivos donde se encuentra todo lo trabajado para 
 |---|---|
 | `public/css/estilos.css` | Hoja de estilos personalizada del proyecto |
 
-### Migraciones y Seeders
+### Base de datos
 
 | Archivo | Descripcion |
 |---|---|
-| `database/migrations/` | Definicion de las tablas (emprendedores, programas_formacion, emprendedor_programa) |
-| `database/seeders/EmprendedorSeeder.php` | Datos de ejemplo de emprendedores |
-| `database/seeders/ProgramaFormacionSeeder.php` | Datos de ejemplo de programas de formacion |
+| `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | Crea la tabla `emprendedores` en la base de datos con todos sus campos. Se ejecuta con `php artisan migrate` |
+
+---
+
+## Arquitectura: Backend y Frontend
+
+Este proyecto sigue el patron **MVC (Modelo - Vista - Controlador)** de Laravel, donde el backend y el frontend tienen responsabilidades separadas pero se comunican entre si.
+
+---
+
+### Backend
+
+El backend es la parte del sistema que corre en el servidor. Se encarga de recibir las peticiones del navegador, procesarlas, manejar los datos y decidir que respuesta enviar. En este proyecto el backend esta escrito en **PHP con Laravel**.
+
+#### Como funciona el flujo del backend
+
+1. El navegador hace una peticion (ej: entrar a `/emprendedores`).
+2. Laravel revisa `routes/web.php` y determina que controlador debe responder.
+3. El controlador ejecuta la logica necesaria (obtener datos, validar formularios, etc.).
+4. El controlador le pasa los datos a una vista para que se muestre en el navegador.
+
+#### Archivos del backend
+
+| Archivo | Rol | Como funciona |
+|---|---|---|
+| `routes/web.php` | **Enrutador** | Define que URL activa que controlador. Usa `Route::resource()` para generar automaticamente las 7 rutas CRUD (index, create, store, edit, update, destroy) |
+| `app/Http/Controllers/EmprendedorController.php` | **Controlador** | Gestiona el CRUD completo de emprendedores conectado a la base de datos. Usa el modelo `Emprendedor` para leer, insertar, actualizar y eliminar registros |
+| `app/Http/Controllers/ProgramaFormacionController.php` | **Controlador** | Gestiona los programas de formacion. Solo implementa index, create y store. Pendiente conectar a la base de datos |
+| `app/Models/Emprendedor.php` | **Modelo** | Representa la tabla `emprendedores` en la base de datos. Define que campos se pueden guardar y es usado por el controlador para leer y escribir registros reales |
+| `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | **Migracion** | Crea la tabla `emprendedores` en MySQL con todos sus campos al correr `php artisan migrate` |
+
+> Los programas de formacion aun manejan datos estaticos directamente en el controlador y no usan base de datos.
+
+---
+
+### Frontend
+
+El frontend es la parte del sistema que ve y usa el usuario en el navegador. Se encarga de presentar la informacion de forma visual, mostrar formularios y enviar los datos ingresados al backend. En este proyecto el frontend usa **Blade (motor de plantillas de Laravel), Bootstrap 5 y CSS personalizado**.
+
+#### Como funciona el flujo del frontend
+
+1. El controlador (backend) llama a una vista y le pasa los datos necesarios.
+2. Laravel procesa el archivo `.blade.php` y genera HTML puro.
+3. El navegador recibe ese HTML junto con los estilos de Bootstrap y el CSS propio.
+4. Cuando el usuario llena un formulario y hace clic en "Guardar", el navegador envia los datos al backend via POST.
+
+#### Archivos del frontend
+
+| Archivo | Rol | Como funciona |
+|---|---|---|
+| `resources/views/layout.blade.php` | **Plantilla base** | Define la estructura comun de todas las paginas: barra de navegacion, encabezado, area de mensajes de exito y pie de pagina. Las demas vistas la extienden con `@extends('layout')` |
+| `resources/views/inicio.blade.php` | **Pagina de inicio** | Vista de bienvenida con la descripcion del proyecto y botones de acceso rapido a las dos secciones principales |
+| `resources/views/emprendedores/index.blade.php` | **Listado** | Muestra todos los emprendedores en una tabla con sus datos. Incluye botones de editar y eliminar por cada fila. El boton eliminar usa un formulario con metodo DELETE |
+| `resources/views/emprendedores/create.blade.php` | **Formulario de creacion** | Formulario con todos los campos del emprendedor. Usa `@error` para mostrar mensajes de validacion y `old()` para conservar los valores si el formulario es rechazado |
+| `resources/views/emprendedores/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados con los datos actuales. Usa `@method('PUT')` para simular el metodo HTTP PUT |
+| `resources/views/programas/index.blade.php` | **Listado** | Tabla con todos los programas de formacion disponibles |
+| `resources/views/programas/create.blade.php` | **Formulario de creacion** | Formulario para registrar un nuevo programa con nombre y descripcion |
+| `public/css/estilos.css` | **Estilos propios** | Define que el body ocupe toda la pantalla (`min-height: 100vh`) y que el footer siempre quede al fondo usando Flexbox |
 
 ---
 

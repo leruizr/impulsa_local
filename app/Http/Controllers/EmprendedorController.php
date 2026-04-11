@@ -2,70 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Emprendedor;
 use Illuminate\Http\Request;
 
 // Controlador que gestiona todas las operaciones CRUD de los emprendedores.
-// Por ahora trabaja con datos en memoria (sin base de datos) para propósitos de desarrollo.
+// Cada accion lee o escribe directamente en la tabla 'emprendedores' de la base de datos.
 class EmprendedorController extends Controller
 {
-    // Retorna una colección de emprendedores de ejemplo (datos estáticos en memoria).
-    // Esta función simula lo que luego será una consulta real a la base de datos.
-    private function getEmprendedores()
-    {
-        return collect([
-            (object) [
-                'id' => 1,
-                'nombre' => 'María del Carmen López',
-                'actividad_economica' => 'artesano',
-                'ubicacion' => 'Barrio San José, Calle 12 #4-56',
-                'telefono' => '3101234567',
-                'email' => 'maria.lopez@correo.com',
-                'estado' => 'activo',
-            ],
-            (object) [
-                'id' => 2,
-                'nombre' => 'José Hernando Ramírez',
-                'actividad_economica' => 'panadería',
-                'ubicacion' => 'Barrio El Centro, Carrera 7 #10-23',
-                'telefono' => '3209876543',
-                'email' => 'jose.ramirez@correo.com',
-                'estado' => 'activo',
-            ],
-            (object) [
-                'id' => 3,
-                'nombre' => 'Luz Dary Moreno',
-                'actividad_economica' => 'tienda',
-                'ubicacion' => 'Barrio La Esperanza, Calle 5 #8-12',
-                'telefono' => '3156789012',
-                'email' => 'luz.moreno@correo.com',
-                'estado' => 'activo',
-            ],
-            (object) [
-                'id' => 4,
-                'nombre' => 'Carlos Andrés Patiño',
-                'actividad_economica' => 'taller',
-                'ubicacion' => 'Barrio Las Flores, Carrera 3 #15-40',
-                'telefono' => '3184567890',
-                'email' => 'carlos.patino@correo.com',
-                'estado' => 'inactivo',
-            ],
-            (object) [
-                'id' => 5,
-                'nombre' => 'Ana Milena Torres',
-                'actividad_economica' => 'otro',
-                'ubicacion' => 'Barrio Nuevo Horizonte, Calle 20 #6-78',
-                'telefono' => '3001122334',
-                'email' => 'ana.torres@correo.com',
-                'estado' => 'activo',
-            ],
-        ]);
-    }
-
-    // Muestra la lista de todos los emprendedores registrados.
+    // Obtiene todos los emprendedores de la base de datos y los muestra en el listado.
     // Corresponde a la ruta GET /emprendedores
     public function index()
     {
-        $emprendedores = $this->getEmprendedores();
+        $emprendedores = Emprendedor::all();
         return view('emprendedores.index', compact('emprendedores'));
     }
 
@@ -76,7 +24,7 @@ class EmprendedorController extends Controller
         return view('emprendedores.create');
     }
 
-    // Recibe y valida los datos del formulario de creación, luego redirige al listado.
+    // Valida los datos del formulario y guarda el nuevo emprendedor en la base de datos.
     // Corresponde a la ruta POST /emprendedores
     public function store(Request $request)
     {
@@ -90,31 +38,29 @@ class EmprendedorController extends Controller
             'estado'              => 'required|in:activo,inactivo',
         ]);
 
-        // Redirige al listado con un mensaje de éxito (aún no persiste en BD)
+        // Crea y guarda el emprendedor en la base de datos con los datos del formulario
+        Emprendedor::create($request->only([
+            'nombre', 'actividad_economica', 'ubicacion', 'telefono', 'email', 'estado'
+        ]));
+
         return redirect()->route('emprendedores.index')
             ->with('success', 'Emprendedor registrado exitosamente.');
     }
 
-    // Muestra el formulario de edición con los datos actuales del emprendedor.
+    // Busca el emprendedor en la base de datos y muestra el formulario con sus datos actuales.
     // Corresponde a la ruta GET /emprendedores/{id}/edit
     public function edit($id)
     {
-        // Busca el emprendedor por su ID en la colección en memoria
-        $emprendedor = $this->getEmprendedores()->firstWhere('id', (int) $id);
-
-        // Si no se encuentra el ID, redirige al listado sin mostrar error
-        if (!$emprendedor) {
-            return redirect()->route('emprendedores.index');
-        }
-
+        // findOrFail lanza un error 404 automaticamente si el ID no existe
+        $emprendedor = Emprendedor::findOrFail($id);
         return view('emprendedores.edit', compact('emprendedor'));
     }
 
-    // Recibe y valida los datos del formulario de edición, luego redirige al listado.
+    // Valida los datos del formulario y actualiza el emprendedor en la base de datos.
     // Corresponde a la ruta PUT /emprendedores/{id}
     public function update(Request $request, $id)
     {
-        // Aplica las mismas reglas de validación que en el registro
+        // Aplica las mismas reglas de validacion que en el registro
         $request->validate([
             'nombre'              => 'required|string|max:255',
             'actividad_economica' => 'required|in:artesano,panadería,taller,tienda,otro',
@@ -124,16 +70,24 @@ class EmprendedorController extends Controller
             'estado'              => 'required|in:activo,inactivo',
         ]);
 
-        // Redirige al listado con mensaje de éxito (aún no actualiza en BD)
+        // Busca el emprendedor y actualiza sus datos en la base de datos
+        $emprendedor = Emprendedor::findOrFail($id);
+        $emprendedor->update($request->only([
+            'nombre', 'actividad_economica', 'ubicacion', 'telefono', 'email', 'estado'
+        ]));
+
         return redirect()->route('emprendedores.index')
             ->with('success', 'Emprendedor actualizado exitosamente.');
     }
 
-    // Elimina un emprendedor y redirige al listado.
+    // Elimina el emprendedor de la base de datos.
     // Corresponde a la ruta DELETE /emprendedores/{id}
     public function destroy($id)
     {
-        // Redirige al listado con mensaje de éxito (aún no elimina en BD)
+        // Busca el emprendedor y lo elimina permanentemente de la base de datos
+        $emprendedor = Emprendedor::findOrFail($id);
+        $emprendedor->delete();
+
         return redirect()->route('emprendedores.index')
             ->with('success', 'Emprendedor eliminado exitosamente.');
     }
