@@ -1,13 +1,404 @@
-/* Hace que el body ocupe al menos toda la pantalla verticalmente
-   y organiza el contenido en columna (navbar, main y footer apilados) */
+/* =====================================================
+   Variables de marca Impulsa Local (basadas en el mockup)
+   ===================================================== */
+:root {
+    /* Azul oscuro de marca — usado en el logo IMPULSO */
+    --azul-marca: #1E5A8E;
+    --azul-marca-hover: #164773;
+
+    /* Azul vibrante primario — usado en botones de acción (Inscribirse, Guardar, etc.) */
+    --azul-primary: #2563EB;
+    --azul-primary-hover: #1D4ED8;
+
+    /* Verde de marca — usado en logo LOCAL y badges activos */
+    --verde-marca: #2E9B6F;
+    --verde-marca-hover: #248058;
+
+    /* Gris carbón — usado en botones secundarios y títulos de sección (como en el mockup) */
+    --gris-boton: #3D4A5C;
+    --gris-boton-hover: #2c3645;
+    --gris-claro: #6c757d;
+
+    /* Rojo de marca — acciones destructivas */
+    --rojo-marca: #C0392B;
+    --rojo-marca-hover: #962e22;
+
+    /* Fondos de header/body/footer claramente diferenciados */
+    --body-bg: #FFFFFF;
+    --header-bg: #FFFFFF;
+    --footer-bg: #F5F5F5;
+
+    /* Bordes y separadores */
+    --borde-claro: #e0e0e0;
+    --borde-footer: #d0d4d9;
+    --borde-fila: #f0f0f0;
+    --hover-fila: #f9f9f9;
+}
+
+/* =====================================================
+   Layout base
+   ===================================================== */
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: var(--body-bg);
+    color: var(--gris-boton);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
 }
 
-/* Permite que el contenido principal crezca y empuje el footer
-   hacia la parte inferior de la pantalla (footer pegado al fondo) */
 main {
-    flex: 1;
+    flex: 1 0 auto;
+}
+
+/* =====================================================
+   Navbar — fondo blanco, sombra para diferenciarlo del body
+   ===================================================== */
+.navbar-marca {
+    background-color: var(--header-bg) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--borde-claro);
+    padding: 1rem 0;
+}
+
+.navbar-marca .nav-link {
+    color: var(--gris-boton);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: color 0.15s ease-in-out;
+}
+
+.navbar-marca .nav-link:hover,
+.navbar-marca .nav-link:focus,
+.navbar-marca .nav-link.active {
+    color: var(--azul-primary);
+}
+
+/* Logo de marca: IMPULSO en azul oscuro, LOCAL en verde, apilados */
+.logo-marca {
+    line-height: 1;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.logo-marca .logo-line {
+    display: block;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+}
+
+.logo-marca .logo-impulso {
+    color: var(--azul-marca);
+}
+
+.logo-marca .logo-local {
+    color: var(--verde-marca);
+}
+
+/* =====================================================
+   Botones de marca (self-contained: no dependen de .btn)
+   ===================================================== */
+.btn-marca-primary,
+.btn-marca-secondary,
+.btn-marca-danger,
+.btn-marca-outline {
+    display: inline-block;
+    padding: 0.55rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    border-radius: 0.4rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+    user-select: none;
+    white-space: nowrap;
+}
+
+/* Botón primario azul vibrante (acciones principales: Inscribirse, Guardar, +Agregar) */
+.btn-marca-primary {
+    background-color: var(--azul-primary);
+    color: #ffffff;
+    border-color: var(--azul-primary);
+}
+.btn-marca-primary:hover,
+.btn-marca-primary:focus,
+.btn-marca-primary:active {
+    background-color: var(--azul-primary-hover);
+    border-color: var(--azul-primary-hover);
+    color: #ffffff;
+}
+
+/* Botón secundario gris carbón (Editar, Ver, Cancelar, Volver) */
+.btn-marca-secondary {
+    background-color: var(--gris-boton);
+    color: #ffffff;
+    border-color: var(--gris-boton);
+}
+.btn-marca-secondary:hover,
+.btn-marca-secondary:focus,
+.btn-marca-secondary:active {
+    background-color: var(--gris-boton-hover);
+    border-color: var(--gris-boton-hover);
+    color: #ffffff;
+}
+.btn-marca-secondary:disabled,
+.btn-marca-secondary.disabled {
+    background-color: var(--gris-claro);
+    border-color: var(--gris-claro);
+    opacity: 0.85;
+    cursor: not-allowed;
+}
+
+/* Botón rojo (acciones destructivas) */
+.btn-marca-danger {
+    background-color: var(--rojo-marca);
+    color: #ffffff;
+    border-color: var(--rojo-marca);
+}
+.btn-marca-danger:hover,
+.btn-marca-danger:focus,
+.btn-marca-danger:active {
+    background-color: var(--rojo-marca-hover);
+    border-color: var(--rojo-marca-hover);
+    color: #ffffff;
+}
+
+/* Botón outline azul (acción secundaria del hero) */
+.btn-marca-outline {
+    background-color: transparent;
+    color: var(--azul-primary);
+    border-color: var(--azul-primary);
+}
+.btn-marca-outline:hover,
+.btn-marca-outline:focus,
+.btn-marca-outline:active {
+    background-color: var(--azul-primary);
+    color: #ffffff;
+}
+
+/* Tamaños */
+.btn-marca-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.825rem;
+    border-radius: 0.3rem;
+}
+
+.btn-marca-lg {
+    padding: 0.85rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 0.5rem;
+    min-width: 240px;
+}
+
+/* =====================================================
+   Badges
+   ===================================================== */
+.badge-activo,
+.badge-inactivo,
+.badge-info-marca {
+    display: inline-block;
+    padding: 0.4em 0.85em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-radius: 50rem; /* pill */
+    color: #ffffff;
+}
+
+.badge-activo {
+    background-color: var(--verde-marca);
+}
+
+.badge-inactivo {
+    background-color: var(--gris-claro);
+}
+
+.badge-info-marca {
+    background-color: var(--azul-primary);
+}
+
+/* =====================================================
+   Tablas
+   ===================================================== */
+.tabla-marca {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid var(--borde-claro);
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+
+.tabla-marca thead th {
+    background-color: #ffffff;
+    color: var(--gris-boton);
+    font-weight: 700;
+    border-bottom: 2px solid var(--borde-claro);
+    padding: 1rem 0.85rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tabla-marca tbody td {
+    padding: 0.9rem 0.85rem;
+    border-bottom: 1px solid var(--borde-fila);
+    vertical-align: middle;
+    color: var(--gris-boton);
+}
+
+.tabla-marca tbody tr:hover td {
+    background-color: var(--hover-fila);
+}
+
+.tabla-marca tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tabla-wrapper {
+    background-color: #ffffff;
+    border-radius: 0.6rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* =====================================================
+   Tarjetas de información y formularios
+   ===================================================== */
+.info-card {
+    background-color: #ffffff;
+    border: 1px solid var(--borde-claro);
+    border-radius: 0.6rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 1.75rem 2rem;
+}
+
+/* Títulos de tarjeta en gris carbón (como en el mockup) */
+.info-card-title {
+    color: var(--gris-boton);
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--borde-claro);
+}
+
+.form-card {
+    background-color: #ffffff;
+    border: 1px solid var(--borde-claro);
+    border-radius: 0.6rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 2rem;
+}
+
+.form-card .form-label {
+    color: var(--gris-boton);
+    font-weight: 600;
+}
+
+/* Focus de inputs en el azul vibrante de marca */
+.form-card .form-control:focus,
+.form-card .form-select:focus {
+    border-color: var(--azul-primary);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+}
+
+/* =====================================================
+   Hero página de inicio
+   ===================================================== */
+.hero-marca {
+    text-align: center;
+    padding: 3.5rem 1rem;
+}
+
+/* Título del hero en gris carbón (como los headings del mockup) */
+.hero-marca h1 {
+    color: var(--gris-boton);
+    font-weight: 800;
+    font-size: 2.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.hero-marca .lead {
+    color: var(--gris-boton);
+    font-size: 1.1rem;
+    max-width: 720px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+}
+
+/* Título de página estándar en gris carbón */
+.page-title {
+    color: var(--gris-boton);
+    font-weight: 700;
+    margin: 0;
+}
+
+/* =====================================================
+   Footer — gris #F5F5F5 con borde superior grueso
+   para diferenciarlo claramente del header blanco
+   ===================================================== */
+.footer-marca {
+    background-color: var(--footer-bg);
+    color: var(--gris-boton);
+    padding: 2.5rem 0 1rem;
+    margin-top: auto;
+    border-top: 3px solid var(--borde-footer);
+}
+
+/* "Iniciativa ciudad nueva" — pequeño, gris, sin énfasis (como en el mockup) */
+.footer-marca h5 {
+    color: var(--gris-boton);
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.footer-marca p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--gris-boton);
+}
+
+.footer-marca a {
+    color: var(--gris-boton);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.footer-marca a:hover {
+    color: var(--azul-primary);
+}
+
+.footer-marca .social-icons {
+    display: flex;
+    gap: 1.25rem;
+    font-size: 1.7rem;
+}
+
+.footer-marca .footer-bottom {
+    border-top: 1px solid #d8d8d8;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--gris-claro);
+}
+
+/* =====================================================
+   Ajustes responsive
+   ===================================================== */
+@media (max-width: 991.98px) {
+    .hero-marca h1 {
+        font-size: 2rem;
+    }
+    .btn-marca-lg {
+        min-width: 200px;
+        padding: 0.7rem 1.5rem;
+    }
 }
