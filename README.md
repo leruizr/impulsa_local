@@ -149,15 +149,16 @@ A continuacion se listan los archivos donde se encuentra todo lo trabajado para 
 
 | Archivo | Descripcion |
 |---|---|
-| `app/Http/Controllers/EmprendedorController.php` | Logica para listar, crear, editar y eliminar emprendedores. Lee y escribe en la base de datos a traves del modelo Emprendedor |
-| `app/Http/Controllers/ProgramaFormacionController.php` | Logica para listar y crear programas de formacion. Contiene datos estaticos de ejemplo (pendiente conectar a BD) |
+| `app/Http/Controllers/EmprendedorController.php` | Logica para listar, ver detalle, crear, editar y eliminar emprendedores. Lee y escribe en la base de datos a traves del modelo Emprendedor |
+| `app/Http/Controllers/ProgramaFormacionController.php` | Logica CRUD completa para programas de formacion. Lee y escribe en la base de datos a traves del modelo ProgramaFormacion |
+| `app/Http/Controllers/InscripcionController.php` | Logica para inscribir emprendedores en programas de formacion y cancelar inscripciones. Trabaja sobre la tabla pivote `emprendedor_programa` |
 
 ### Modelos
 
 | Archivo | Descripcion |
 |---|---|
-| `app/Models/Emprendedor.php` | Modelo del emprendedor (campos: nombre, actividad economica, ubicacion, telefono, email, estado) |
-| `app/Models/ProgramaFormacion.php` | Modelo del programa de formacion (campos: nombre, descripcion) |
+| `app/Models/Emprendedor.php` | Modelo del emprendedor (campos: nombre, actividad economica, ubicacion, telefono, email, estado). Define la relacion muchos a muchos con ProgramaFormacion |
+| `app/Models/ProgramaFormacion.php` | Modelo del programa de formacion (campos: nombre, descripcion, cupo_maximo, estado). Define la relacion muchos a muchos con Emprendedor |
 
 ### Vistas (Blade Templates)
 
@@ -168,8 +169,10 @@ A continuacion se listan los archivos donde se encuentra todo lo trabajado para 
 | `resources/views/emprendedores/index.blade.php` | Tabla con el listado de todos los emprendedores |
 | `resources/views/emprendedores/create.blade.php` | Formulario para registrar un nuevo emprendedor |
 | `resources/views/emprendedores/edit.blade.php` | Formulario para editar un emprendedor existente |
+| `resources/views/emprendedores/show.blade.php` | Detalle del emprendedor con sus programas inscritos y formulario para inscribirlo en uno nuevo |
 | `resources/views/programas/index.blade.php` | Tabla con el listado de programas de formacion |
 | `resources/views/programas/create.blade.php` | Formulario para crear un nuevo programa de formacion |
+| `resources/views/programas/edit.blade.php` | Formulario para editar un programa de formacion existente |
 
 ### Estilos
 
@@ -182,6 +185,10 @@ A continuacion se listan los archivos donde se encuentra todo lo trabajado para 
 | Archivo | Descripcion |
 |---|---|
 | `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | Crea la tabla `emprendedores` en la base de datos con todos sus campos. Se ejecuta con `php artisan migrate` |
+| `database/migrations/2026_04_02_000002_create_programas_formacion_table.php` | Crea la tabla `programas_formacion` con los campos basicos (id, nombre, descripcion) |
+| `database/migrations/2026_04_02_000003_create_emprendedor_programa_table.php` | Crea la tabla pivote `emprendedor_programa` para la relacion muchos a muchos entre emprendedores y programas |
+| `database/migrations/2026_05_02_000001_add_cupo_maximo_and_estado_to_programas_formacion_table.php` | Agrega los campos `cupo_maximo` y `estado` a la tabla `programas_formacion` |
+| `database/migrations/2026_05_02_000002_add_estado_and_unique_to_emprendedor_programa_table.php` | Agrega el campo `estado` a la pivote y un indice unico que evita inscripciones duplicadas |
 
 ---
 
@@ -206,13 +213,17 @@ El backend es la parte del sistema que corre en el servidor. Se encarga de recib
 
 | Archivo | Rol | Como funciona |
 |---|---|---|
-| `routes/web.php` | **Enrutador** | Define que URL activa que controlador. Usa `Route::resource()` para generar automaticamente las 7 rutas CRUD (index, create, store, edit, update, destroy) |
-| `app/Http/Controllers/EmprendedorController.php` | **Controlador** | Gestiona el CRUD completo de emprendedores conectado a la base de datos. Usa el modelo `Emprendedor` para leer, insertar, actualizar y eliminar registros |
-| `app/Http/Controllers/ProgramaFormacionController.php` | **Controlador** | Gestiona los programas de formacion. Solo implementa index, create y store. Pendiente conectar a la base de datos |
-| `app/Models/Emprendedor.php` | **Modelo** | Representa la tabla `emprendedores` en la base de datos. Define que campos se pueden guardar y es usado por el controlador para leer y escribir registros reales |
+| `routes/web.php` | **Enrutador** | Define que URL activa que controlador. Usa `Route::resource()` para generar automaticamente las 7 rutas CRUD (index, create, store, show, edit, update, destroy) y agrega rutas adicionales para inscripciones |
+| `app/Http/Controllers/EmprendedorController.php` | **Controlador** | Gestiona el CRUD completo de emprendedores conectado a la base de datos. Incluye el metodo `show()` que muestra el detalle del emprendedor con sus programas inscritos |
+| `app/Http/Controllers/ProgramaFormacionController.php` | **Controlador** | Gestiona el CRUD completo de programas de formacion conectado a la base de datos a traves del modelo `ProgramaFormacion` |
+| `app/Http/Controllers/InscripcionController.php` | **Controlador** | Gestiona la inscripcion y cancelacion de inscripciones de emprendedores en programas. Usa la relacion muchos a muchos definida en los modelos |
+| `app/Models/Emprendedor.php` | **Modelo** | Representa la tabla `emprendedores` en la base de datos. Define la relacion muchos a muchos con ProgramaFormacion a traves de la pivote |
+| `app/Models/ProgramaFormacion.php` | **Modelo** | Representa la tabla `programas_formacion`. Define la relacion muchos a muchos con Emprendedor a traves de la pivote |
 | `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | **Migracion** | Crea la tabla `emprendedores` en MySQL con todos sus campos al correr `php artisan migrate` |
-
-> Los programas de formacion aun manejan datos estaticos directamente en el controlador y no usan base de datos.
+| `database/migrations/2026_04_02_000002_create_programas_formacion_table.php` | **Migracion** | Crea la tabla `programas_formacion` con los campos basicos |
+| `database/migrations/2026_04_02_000003_create_emprendedor_programa_table.php` | **Migracion** | Crea la tabla pivote para la relacion muchos a muchos |
+| `database/migrations/2026_05_02_000001_add_cupo_maximo_and_estado_to_programas_formacion_table.php` | **Migracion** | Agrega los campos `cupo_maximo` y `estado` a la tabla de programas |
+| `database/migrations/2026_05_02_000002_add_estado_and_unique_to_emprendedor_programa_table.php` | **Migracion** | Agrega el campo `estado` y el indice unico a la tabla pivote |
 
 ---
 
@@ -233,11 +244,13 @@ El frontend es la parte del sistema que ve y usa el usuario en el navegador. Se 
 |---|---|---|
 | `resources/views/layout.blade.php` | **Plantilla base** | Define la estructura comun de todas las paginas: barra de navegacion, encabezado, area de mensajes de exito y pie de pagina. Las demas vistas la extienden con `@extends('layout')` |
 | `resources/views/inicio.blade.php` | **Pagina de inicio** | Vista de bienvenida con la descripcion del proyecto y botones de acceso rapido a las dos secciones principales |
-| `resources/views/emprendedores/index.blade.php` | **Listado** | Muestra todos los emprendedores en una tabla con sus datos. Incluye botones de editar y eliminar por cada fila. El boton eliminar usa un formulario con metodo DELETE |
+| `resources/views/emprendedores/index.blade.php` | **Listado** | Muestra todos los emprendedores en una tabla con sus datos. Incluye botones de ver inscripciones, editar y eliminar por cada fila. El boton eliminar usa un formulario con metodo DELETE |
 | `resources/views/emprendedores/create.blade.php` | **Formulario de creacion** | Formulario con todos los campos del emprendedor. Usa `@error` para mostrar mensajes de validacion y `old()` para conservar los valores si el formulario es rechazado |
 | `resources/views/emprendedores/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados con los datos actuales. Usa `@method('PUT')` para simular el metodo HTTP PUT |
-| `resources/views/programas/index.blade.php` | **Listado** | Tabla con todos los programas de formacion disponibles |
-| `resources/views/programas/create.blade.php` | **Formulario de creacion** | Formulario para registrar un nuevo programa con nombre y descripcion |
+| `resources/views/emprendedores/show.blade.php` | **Detalle e inscripciones** | Muestra los datos del emprendedor en una tarjeta, la tabla de programas inscritos (con boton para cancelar inscripcion) y un formulario para inscribirlo en un programa nuevo |
+| `resources/views/programas/index.blade.php` | **Listado** | Tabla con todos los programas de formacion disponibles, con sus columnas de cupo maximo, estado y botones de editar y eliminar |
+| `resources/views/programas/create.blade.php` | **Formulario de creacion** | Formulario para registrar un nuevo programa con nombre, descripcion, cupo maximo y estado |
+| `resources/views/programas/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados con los datos actuales. Usa `@method('PUT')` |
 | `public/css/estilos.css` | **Estilos propios** | Define que el body ocupe toda la pantalla (`min-height: 100vh`) y que el footer siempre quede al fondo usando Flexbox |
 
 ---
@@ -249,9 +262,13 @@ El frontend es la parte del sistema que ve y usa el usuario en el navegador. Se 
 | `/` | Pagina de inicio |
 | `/emprendedores` | Listado de emprendedores |
 | `/emprendedores/create` | Formulario para registrar emprendedor |
+| `/emprendedores/{id}` | Detalle del emprendedor con sus programas inscritos y formulario para inscribirlo en uno nuevo |
 | `/emprendedores/{id}/edit` | Formulario para editar emprendedor |
 | `/programas` | Listado de programas de formacion |
 | `/programas/create` | Formulario para crear programa |
+| `/programas/{id}/edit` | Formulario para editar programa |
+| `POST /emprendedores/{id}/inscripciones` | Inscribe al emprendedor en un programa de formacion |
+| `DELETE /emprendedores/{id}/inscripciones/{programa}` | Cancela la inscripcion del emprendedor en un programa |
 
 ---
 

@@ -15,6 +15,9 @@
             <tr>
                 <th>Nombre</th>
                 <th>Descripción</th>
+                <th>Cupo Máximo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -23,6 +26,26 @@
             <tr>
                 <td>{{ $programa->nombre }}</td>
                 <td>{{ $programa->descripcion }}</td>
+                <td>{{ $programa->cupo_maximo }}</td>
+                <td>
+                    {{-- Muestra badge verde si está activo, gris si está inactivo --}}
+                    @if($programa->estado === 'activo')
+                        <span class="badge bg-success">Activo</span>
+                    @else
+                        <span class="badge bg-secondary">Inactivo</span>
+                    @endif
+                </td>
+                <td>
+                    {{-- Botón para ir al formulario de edición --}}
+                    <a href="{{ route('programas.edit', $programa->id) }}" class="btn btn-sm btn-warning">Editar</a>
+
+                    {{-- Formulario de eliminación: usa método DELETE con confirmación previa --}}
+                    <form action="{{ route('programas.destroy', $programa->id) }}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este programa?')">Eliminar</button>
+                    </form>
+                </td>
             </tr>
             @endforeach
         </tbody>

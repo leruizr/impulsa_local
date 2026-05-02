@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Emprendedor;
+use App\Models\ProgramaFormacion;
 use Illuminate\Http\Request;
 
 // Controlador que gestiona todas las operaciones CRUD de los emprendedores.
@@ -45,6 +46,25 @@ class EmprendedorController extends Controller
 
         return redirect()->route('emprendedores.index')
             ->with('success', 'Emprendedor registrado exitosamente.');
+    }
+
+    // Muestra el detalle del emprendedor con sus programas inscritos
+    // y el formulario para inscribirlo en un programa nuevo.
+    // Corresponde a la ruta GET /emprendedores/{id}
+    public function show($id)
+    {
+        // Carga el emprendedor junto con sus programas inscritos en una sola consulta
+        $emprendedor = Emprendedor::with('programasFormacion')->findOrFail($id);
+
+        // Lista los IDs de los programas en los que ya está inscrito
+        $programasInscritosIds = $emprendedor->programasFormacion->pluck('id');
+
+        // Trae solo los programas activos donde el emprendedor aun no esta inscrito
+        $programasDisponibles = ProgramaFormacion::where('estado', 'activo')
+            ->whereNotIn('id', $programasInscritosIds)
+            ->get();
+
+        return view('emprendedores.show', compact('emprendedor', 'programasDisponibles'));
     }
 
     // Busca el emprendedor en la base de datos y muestra el formulario con sus datos actuales.

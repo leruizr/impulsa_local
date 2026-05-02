@@ -16,16 +16,18 @@ class ProgramaFormacion extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
+        'cupo_maximo', // Cantidad máxima de emprendedores que pueden inscribirse
+        'estado',      // Puede ser 'activo' o 'inactivo'
     ];
 
     // Relación muchos a muchos con Emprendedor.
     // Un programa puede tener varios emprendedores inscritos y
     // un emprendedor puede estar en varios programas.
-    // La tabla intermedia 'emprendedor_programa' guarda la fecha de inscripción.
+    // La tabla intermedia 'emprendedor_programa' guarda la fecha de inscripción y el estado.
     public function emprendedores(): BelongsToMany
     {
         return $this->belongsToMany(Emprendedor::class, 'emprendedor_programa')
-            ->withPivot('fecha_inscripcion') // Incluye el campo extra de la tabla pivot
-            ->withTimestamps();              // Gestiona automáticamente created_at y updated_at en la pivot
+            ->withPivot('fecha_inscripcion', 'estado') // Incluye los campos extra de la tabla pivot
+            ->withTimestamps();                        // Gestiona automáticamente created_at y updated_at en la pivot
     }
 }

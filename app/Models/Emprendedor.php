@@ -26,11 +26,11 @@ class Emprendedor extends Model
     // Relación muchos a muchos con ProgramaFormacion.
     // Un emprendedor puede estar inscrito en varios programas y
     // un programa puede tener varios emprendedores.
-    // La tabla intermedia 'emprendedor_programa' guarda además la fecha de inscripción.
+    // La tabla intermedia 'emprendedor_programa' guarda además la fecha de inscripción y el estado.
     public function programasFormacion(): BelongsToMany
     {
         return $this->belongsToMany(ProgramaFormacion::class, 'emprendedor_programa')
-            ->withPivot('fecha_inscripcion') // Incluye el campo extra de la tabla pivot
-            ->withTimestamps();              // Gestiona automáticamente created_at y updated_at en la pivot
+            ->withPivot('fecha_inscripcion', 'estado') // Incluye los campos extra de la tabla pivot
+            ->withTimestamps();                        // Gestiona automáticamente created_at y updated_at en la pivot
     }
 }

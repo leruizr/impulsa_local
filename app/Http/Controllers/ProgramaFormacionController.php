@@ -2,67 +2,89 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProgramaFormacion;
 use Illuminate\Http\Request;
 
-// Controlador que gestiona los programas de formación ofrecidos a los emprendedores.
-// Por ahora trabaja con datos en memoria (sin base de datos) para propósitos de desarrollo.
+// Controlador que gestiona todas las operaciones CRUD de los programas de formación.
+// Cada accion lee o escribe directamente en la tabla 'programas_formacion' de la base de datos.
 class ProgramaFormacionController extends Controller
 {
-    // Retorna una colección de programas de ejemplo (datos estáticos en memoria).
-    // Esta función simula lo que luego será una consulta real a la base de datos.
-    private function getProgramas()
-    {
-        return collect([
-            (object) [
-                'id'          => 1,
-                'nombre'      => 'Marketing Digital',
-                'descripcion' => 'Aprende a promocionar tu negocio en redes sociales y plataformas digitales para llegar a más clientes.',
-            ],
-            (object) [
-                'id'          => 2,
-                'nombre'      => 'Comercio Digital',
-                'descripcion' => 'Herramientas y estrategias para vender tus productos y servicios por internet de forma efectiva.',
-            ],
-            (object) [
-                'id'          => 3,
-                'nombre'      => 'Contabilidad Básica',
-                'descripcion' => 'Fundamentos de contabilidad para llevar las cuentas de tu negocio de manera organizada y cumplir con las obligaciones tributarias.',
-            ],
-            (object) [
-                'id'          => 4,
-                'nombre'      => 'Gestión Empresarial',
-                'descripcion' => 'Desarrollo de habilidades administrativas para planificar, organizar y dirigir tu emprendimiento con éxito.',
-            ],
-        ]);
-    }
-
-    // Muestra la lista de todos los programas de formación disponibles.
+    // Obtiene todos los programas de la base de datos y los muestra en el listado.
     // Corresponde a la ruta GET /programas
     public function index()
     {
-        $programas = $this->getProgramas();
+        $programas = ProgramaFormacion::all();
         return view('programas.index', compact('programas'));
     }
 
-    // Muestra el formulario para crear un nuevo programa de formación.
+    // Muestra el formulario para registrar un nuevo programa de formación.
     // Corresponde a la ruta GET /programas/create
     public function create()
     {
         return view('programas.create');
     }
 
-    // Recibe y valida los datos del formulario de creación, luego redirige al listado.
+    // Valida los datos del formulario y guarda el nuevo programa en la base de datos.
     // Corresponde a la ruta POST /programas
     public function store(Request $request)
     {
-        // Valida que el nombre y la descripción estén presentes y sean texto válido
+        // Valida que cada campo cumpla con el formato y valores permitidos
         $request->validate([
             'nombre'      => 'required|string|max:255',
             'descripcion' => 'required|string',
+            'cupo_maximo' => 'required|integer|min:1',
+            'estado'      => 'required|in:activo,inactivo',
         ]);
 
-        // Redirige al listado con mensaje de éxito (aún no persiste en BD)
+        // Crea y guarda el programa en la base de datos con los datos del formulario
+        ProgramaFormacion::create($request->only([
+            'nombre', 'descripcion', 'cupo_maximo', 'estado'
+        ]));
+
         return redirect()->route('programas.index')
             ->with('success', 'Programa de formación creado exitosamente.');
+    }
+
+    // Busca el programa en la base de datos y muestra el formulario con sus datos actuales.
+    // Corresponde a la ruta GET /programas/{id}/edit
+    public function edit($id)
+    {
+        // findOrFail lanza un error 404 automaticamente si el ID no existe
+        $programa = ProgramaFormacion::findOrFail($id);
+        return view('programas.edit', compact('programa'));
+    }
+
+    // Valida los datos del formulario y actualiza el programa en la base de datos.
+    // Corresponde a la ruta PUT /programas/{id}
+    public function update(Request $request, $id)
+    {
+        // Aplica las mismas reglas de validacion que en el registro
+        $request->validate([
+            'nombre'      => 'required|string|max:255',
+            'descripcion' => 'required|string',
+            'cupo_maximo' => 'required|integer|min:1',
+            'estado'      => 'required|in:activo,inactivo',
+        ]);
+
+        // Busca el programa y actualiza sus datos en la base de datos
+        $programa = ProgramaFormacion::findOrFail($id);
+        $programa->update($request->only([
+            'nombre', 'descripcion', 'cupo_maximo', 'estado'
+        ]));
+
+        return redirect()->route('programas.index')
+            ->with('success', 'Programa de formación actualizado exitosamente.');
+    }
+
+    // Elimina el programa de la base de datos.
+    // Corresponde a la ruta DELETE /programas/{id}
+    public function destroy($id)
+    {
+        // Busca el programa y lo elimina permanentemente de la base de datos
+        $programa = ProgramaFormacion::findOrFail($id);
+        $programa->delete();
+
+        return redirect()->route('programas.index')
+            ->with('success', 'Programa de formación eliminado exitosamente.');
     }
 }

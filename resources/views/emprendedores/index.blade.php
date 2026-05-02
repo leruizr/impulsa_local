@@ -41,6 +41,9 @@
                     @endif
                 </td>
                 <td>
+                    {{-- Botón para ver el detalle del emprendedor con sus inscripciones --}}
+                    <a href="{{ route('emprendedores.show', $emprendedor->id) }}" class="btn btn-sm btn-info">Ver inscripciones</a>
+
                     {{-- Botón para ir al formulario de edición --}}
                     <a href="{{ route('emprendedores.edit', $emprendedor->id) }}" class="btn btn-sm btn-warning">Editar</a>
 

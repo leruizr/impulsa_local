@@ -28,6 +28,27 @@
         @enderror
     </div>
 
+    {{-- Campo: Cupo máximo de emprendedores que pueden inscribirse --}}
+    <div class="mb-3">
+        <label for="cupo_maximo" class="form-label">Cupo Máximo</label>
+        <input type="number" min="1" class="form-control @error('cupo_maximo') is-invalid @enderror" id="cupo_maximo" name="cupo_maximo" value="{{ old('cupo_maximo') }}" required>
+        @error('cupo_maximo')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    {{-- Campo: Estado del programa (activo permite nuevas inscripciones) --}}
+    <div class="mb-3">
+        <label for="estado" class="form-label">Estado</label>
+        <select class="form-select @error('estado') is-invalid @enderror" id="estado" name="estado" required>
+            <option value="activo" {{ old('estado', 'activo') == 'activo' ? 'selected' : '' }}>Activo</option>
+            <option value="inactivo" {{ old('estado') == 'inactivo' ? 'selected' : '' }}>Inactivo</option>
+        </select>
+        @error('estado')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
     {{-- Botones: Cancelar regresa al listado, Guardar envía el formulario --}}
     <a href="{{ route('programas.index') }}" class="btn btn-secondary">Cancelar</a>
     <button type="submit" class="btn btn-primary">Guardar</button>
