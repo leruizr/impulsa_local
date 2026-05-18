@@ -29,16 +29,52 @@
 
             {{-- Menú principal alineado a la derecha --}}
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('inicio') }}">Inicio</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('emprendedores.index') }}">Emprendedores</a>
-                    </li>
+
+                    {{-- "Emprendedores" y "Reportes" solo se ven para administradores --}}
+                    @auth
+                        @if(auth()->user()->esAdmin())
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('emprendedores.index') }}">Emprendedores</a>
+                            </li>
+                        @endif
+                    @endauth
+
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('programas.index') }}">Programas de Formación</a>
                     </li>
+
+                    @auth
+                        @if(auth()->user()->esAdmin())
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('reportes.index') }}">Reportes</a>
+                            </li>
+                        @endif
+                    @endauth
+
+                    @auth
+                        {{-- Saludo del usuario actual y botón de cierre de sesión --}}
+                        <li class="nav-item">
+                            <span class="nav-link text-muted">
+                                {{ auth()->user()->name }}
+                                <small>({{ auth()->user()->esAdmin() ? 'Admin' : 'Emprendedor' }})</small>
+                            </span>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn-marca-secondary btn-marca-sm">Cerrar sesión</button>
+                            </form>
+                        </li>
+                    @else
+                        {{-- Sin sesión: enlace al login --}}
+                        <li class="nav-item ms-lg-2">
+                            <a href="{{ route('login') }}" class="btn-marca-primary btn-marca-sm">Iniciar sesión</a>
+                        </li>
+                    @endauth
                 </ul>
             </div>
         </div>

@@ -1,8 +1,24 @@
 # Impulsa Local - Alcaldia de Ciudad Nueva
 
-Plataforma web desarrollada con **Laravel** para la digitalizacion y gestion de emprendedores locales (artesanos, panaderias, talleres y tiendas de barrio) del municipio de Ciudad Nueva. Permite registrar emprendedores, gestionar su informacion e inscribirlos en programas de formacion.
+Plataforma web desarrollada con **Laravel** para la digitalizacion y gestion de emprendedores locales (artesanos, panaderias, talleres y tiendas de barrio) del municipio de Ciudad Nueva. Permite registrar emprendedores, gestionar su informacion e inscribirlos en programas de formacion, con autenticacion por roles (administrador y emprendedor) y modulo de reportes.
 
 > Proyecto academico para la materia **Frameworks para Desarrollo Web - UNAD 2026**.
+
+---
+
+## Funcionalidades implementadas
+
+| # | Funcionalidad |
+|---|---|
+| 1 | Pagina de inicio con opcion para iniciar sesion diferenciando emprendedor y administrador |
+| 2 | Opcion de registrar nuevos emprendedores (auto-registro publico y registro manual por el administrador) |
+| 3 | Opcion para que el emprendedor actualice sus propios datos |
+| 4 | CRUD completo de programas de formacion por parte del administrador |
+| 5 | Inscripcion a programas de formacion disponibles por parte del emprendedor |
+| 6 | Visualizacion y consulta publica de los programas de formacion disponibles |
+| 7 | Visualizacion de los emprendedores inscritos en cada programa de formacion |
+| 8 | Reporte de emprendedores activos en el sistema (con opcion imprimir / guardar como PDF) |
+| 9 | Reporte de emprendedores inscritos en cada programa de formacion (con opcion imprimir / guardar como PDF) |
 
 ---
 
@@ -77,23 +93,29 @@ Sigue estos pasos si vas a descargar el proyecto por primera vez.
    php artisan migrate
    ```
 
-8. **Compilar los assets del frontend:**
+8. **Ejecutar los seeders** (carga datos iniciales: admin, emprendedores y programas de ejemplo):
+
+   ```bash
+   php artisan db:seed
+   ```
+
+9. **Compilar los assets del frontend:**
 
    ```bash
    npm run build
    ```
 
-9. **Iniciar el servidor:**
+10. **Iniciar el servidor:**
 
-   Si usas **Laravel Herd**, el proyecto se sirve automaticamente en `http://impulsa_local.test`.
+    Si usas **Laravel Herd**, el proyecto se sirve automaticamente en `http://impulsa_local.test`.
 
-   Si no usas Herd, ejecuta:
+    Si no usas Herd, ejecuta:
 
-   ```bash
-   php artisan serve
-   ```
+    ```bash
+    php artisan serve
+    ```
 
-   Y accede en `http://localhost:8000`.
+    Y accede en `http://localhost:8000`.
 
 ---
 
@@ -125,13 +147,33 @@ Sigue estos pasos si ya clonaste el proyecto anteriormente y solo quieres actual
    php artisan migrate
    ```
 
-5. **Recompilar los assets** (solo si hubo cambios en CSS o JS):
+5. **Ejecutar seeders nuevos** (solo si se necesita poblar datos iniciales como el usuario admin):
+
+   ```bash
+   php artisan db:seed --class=UsuarioSeeder
+   ```
+
+6. **Recompilar los assets** (solo si hubo cambios en CSS o JS):
 
    ```bash
    npm run build
    ```
 
    > Si el servidor ya estaba corriendo no necesitas reiniciarlo. Con Herd los cambios se reflejan automaticamente.
+
+---
+
+## Credenciales por defecto
+
+Al ejecutar `php artisan db:seed` se crean los siguientes usuarios de prueba:
+
+| Rol | Email | Contraseña |
+|---|---|---|
+| Administrador | `admin@impulsalocal.co` | `admin1234` |
+| Emprendedor (ejemplo) | `luz.moreno@correo.com` | `emprendedor1234` |
+| Emprendedor (ejemplo) | `carlos.patino@correo.com` | `emprendedor1234` |
+
+> Todos los emprendedores cargados por el `EmprendedorSeeder` reciben un usuario asociado con la contraseña `emprendedor1234`. Nuevos emprendedores pueden registrarse desde `/registro`.
 
 ---
 
@@ -143,52 +185,78 @@ A continuacion se listan los archivos donde se encuentra todo lo trabajado para 
 
 | Archivo | Descripcion |
 |---|---|
-| `routes/web.php` | Define todas las rutas de la aplicacion (inicio, emprendedores y programas) |
+| `routes/web.php` | Define todas las rutas de la aplicacion: inicio, autenticacion, emprendedores, programas, inscripciones y reportes. Aplica middlewares `auth` y `rol:admin\|emprendedor` para restringir el acceso |
 
 ### Controladores
 
 | Archivo | Descripcion |
 |---|---|
-| `app/Http/Controllers/EmprendedorController.php` | Logica para listar, ver detalle, crear, editar y eliminar emprendedores. Lee y escribe en la base de datos a traves del modelo Emprendedor |
-| `app/Http/Controllers/ProgramaFormacionController.php` | Logica CRUD completa para programas de formacion. Lee y escribe en la base de datos a traves del modelo ProgramaFormacion |
-| `app/Http/Controllers/InscripcionController.php` | Logica para inscribir emprendedores en programas de formacion y cancelar inscripciones. Trabaja sobre la tabla pivote `emprendedor_programa` |
+| `app/Http/Controllers/AuthController.php` | Maneja inicio de sesion, cierre de sesion y auto-registro de emprendedores (crea Emprendedor + User en una transaccion) |
+| `app/Http/Controllers/EmprendedorController.php` | Logica CRUD de emprendedores. Aplica autorizacion para que un emprendedor solo pueda editar su propio registro |
+| `app/Http/Controllers/ProgramaFormacionController.php` | Logica CRUD completa para programas de formacion. Incluye el metodo `show()` con la lista de emprendedores inscritos |
+| `app/Http/Controllers/InscripcionController.php` | Inscripcion y cancelacion de inscripciones de emprendedores en programas. Valida que el emprendedor solo opere sobre su propio registro |
+| `app/Http/Controllers/ReporteController.php` | Genera los reportes administrativos: emprendedores activos e inscripciones por programa |
+
+### Middleware
+
+| Archivo | Descripcion |
+|---|---|
+| `app/Http/Middleware/RolMiddleware.php` | Middleware personalizado que restringe rutas segun el rol del usuario autenticado (`rol:admin`, `rol:admin,emprendedor`). Registrado como alias `rol` en `bootstrap/app.php` |
 
 ### Modelos
 
 | Archivo | Descripcion |
 |---|---|
-| `app/Models/Emprendedor.php` | Modelo del emprendedor (campos: nombre, actividad economica, ubicacion, telefono, email, estado). Define la relacion muchos a muchos con ProgramaFormacion |
-| `app/Models/ProgramaFormacion.php` | Modelo del programa de formacion (campos: nombre, descripcion, cupo_maximo, estado). Define la relacion muchos a muchos con Emprendedor |
+| `app/Models/User.php` | Modelo del usuario autenticable. Campos `rol` (admin/emprendedor) y `emprendedor_id` (relacion opcional con Emprendedor). Helpers `esAdmin()` y `esEmprendedor()` |
+| `app/Models/Emprendedor.php` | Modelo del emprendedor (nombre, actividad economica, ubicacion, telefono, email, estado). Relacion muchos a muchos con ProgramaFormacion |
+| `app/Models/ProgramaFormacion.php` | Modelo del programa de formacion (nombre, descripcion, cupo_maximo, estado). Relacion muchos a muchos con Emprendedor |
 
 ### Vistas (Blade Templates)
 
 | Archivo | Descripcion |
 |---|---|
-| `resources/views/layout.blade.php` | Plantilla principal (navbar, header y footer comunes a todas las paginas) |
-| `resources/views/inicio.blade.php` | Pagina de inicio con descripcion del proyecto y botones de acceso |
-| `resources/views/emprendedores/index.blade.php` | Tabla con el listado de todos los emprendedores |
-| `resources/views/emprendedores/create.blade.php` | Formulario para registrar un nuevo emprendedor |
-| `resources/views/emprendedores/edit.blade.php` | Formulario para editar un emprendedor existente |
+| `resources/views/layout.blade.php` | Plantilla principal (navbar dinamico segun rol, encabezado y footer). Muestra/oculta enlaces y boton de cerrar sesion segun el estado de autenticacion |
+| `resources/views/inicio.blade.php` | Pagina de inicio. Sin sesion muestra botones de "Ingresar como Emprendedor" / "Ingresar como Administrador" y enlace de registro. Con sesion muestra accesos rapidos segun rol |
+| `resources/views/auth/login.blade.php` | Formulario de inicio de sesion con pestañas para seleccionar rol (Emprendedor / Administrador) |
+| `resources/views/auth/register.blade.php` | Formulario de auto-registro publico para emprendedores. Crea Emprendedor + Usuario asociado |
+| `resources/views/emprendedores/index.blade.php` | Listado de emprendedores (solo admin) con acciones de ver detalle, editar y eliminar |
+| `resources/views/emprendedores/create.blade.php` | Formulario para registrar un nuevo emprendedor (solo admin) |
+| `resources/views/emprendedores/edit.blade.php` | Formulario para editar un emprendedor. El campo "Estado" solo se muestra al administrador |
 | `resources/views/emprendedores/show.blade.php` | Detalle del emprendedor con sus programas inscritos y formulario para inscribirlo en uno nuevo |
-| `resources/views/programas/index.blade.php` | Tabla con el listado de programas de formacion |
-| `resources/views/programas/create.blade.php` | Formulario para crear un nuevo programa de formacion |
-| `resources/views/programas/edit.blade.php` | Formulario para editar un programa de formacion existente |
+| `resources/views/programas/index.blade.php` | Listado publico de programas. El boton "Ver inscritos" requiere sesion; "Nuevo", "Editar" y "Eliminar" solo son visibles al admin |
+| `resources/views/programas/create.blade.php` | Formulario para crear un programa (solo admin) |
+| `resources/views/programas/edit.blade.php` | Formulario para editar un programa (solo admin) |
+| `resources/views/programas/show.blade.php` | Detalle del programa con la tabla de emprendedores inscritos, fechas y estado de cada inscripcion |
+| `resources/views/reportes/index.blade.php` | Portada del modulo de reportes (solo admin) |
+| `resources/views/reportes/emprendedores_activos.blade.php` | Reporte de emprendedores activos en el sistema con opcion "Imprimir / PDF" |
+| `resources/views/reportes/inscripciones_programa.blade.php` | Reporte de emprendedores inscritos en cada programa con opcion "Imprimir / PDF" |
 
 ### Estilos
 
 | Archivo | Descripcion |
 |---|---|
-| `public/css/estilos.css` | Hoja de estilos personalizada del proyecto |
+| `public/css/estilos.css` | Hoja de estilos personalizada del proyecto. Incluye reglas `@media print` que ocultan navbar, footer y botones al imprimir, y muestran un encabezado institucional en los reportes |
 
 ### Base de datos
 
 | Archivo | Descripcion |
 |---|---|
-| `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | Crea la tabla `emprendedores` en la base de datos con todos sus campos. Se ejecuta con `php artisan migrate` |
-| `database/migrations/2026_04_02_000002_create_programas_formacion_table.php` | Crea la tabla `programas_formacion` con los campos basicos (id, nombre, descripcion) |
-| `database/migrations/2026_04_02_000003_create_emprendedor_programa_table.php` | Crea la tabla pivote `emprendedor_programa` para la relacion muchos a muchos entre emprendedores y programas |
-| `database/migrations/2026_05_02_000001_add_cupo_maximo_and_estado_to_programas_formacion_table.php` | Agrega los campos `cupo_maximo` y `estado` a la tabla `programas_formacion` |
-| `database/migrations/2026_05_02_000002_add_estado_and_unique_to_emprendedor_programa_table.php` | Agrega el campo `estado` a la pivote y un indice unico que evita inscripciones duplicadas |
+| `database/migrations/0001_01_01_000000_create_users_table.php` | Crea la tabla `users` de Laravel (autenticacion) |
+| `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | Crea la tabla `emprendedores` con todos sus campos |
+| `database/migrations/2026_04_02_000002_create_programas_formacion_table.php` | Crea la tabla `programas_formacion` con los campos basicos |
+| `database/migrations/2026_04_02_000003_create_emprendedor_programa_table.php` | Crea la tabla pivote `emprendedor_programa` para la relacion muchos a muchos |
+| `database/migrations/2026_05_02_000001_add_cupo_maximo_and_estado_to_programas_formacion_table.php` | Agrega los campos `cupo_maximo` y `estado` a la tabla de programas |
+| `database/migrations/2026_05_02_000002_add_estado_and_unique_to_emprendedor_programa_table.php` | Agrega el campo `estado` y el indice unico a la tabla pivote |
+| `database/migrations/2026_05_18_000001_add_rol_and_emprendedor_id_to_users_table.php` | Migracion aditiva: agrega `rol` (enum admin/emprendedor) y `emprendedor_id` (FK opcional) a la tabla `users` |
+
+### Seeders
+
+| Archivo | Descripcion |
+|---|---|
+| `database/seeders/DatabaseSeeder.php` | Orquesta la ejecucion de los seeders en orden |
+| `database/seeders/EmprendedorSeeder.php` | Inserta emprendedores de ejemplo |
+| `database/seeders/ProgramaFormacionSeeder.php` | Inserta programas de formacion de ejemplo |
+| `database/seeders/UsuarioSeeder.php` | Crea el usuario administrador por defecto y un usuario por cada emprendedor existente |
 
 ---
 
@@ -206,24 +274,32 @@ El backend es la parte del sistema que corre en el servidor. Se encarga de recib
 
 1. El navegador hace una peticion (ej: entrar a `/emprendedores`).
 2. Laravel revisa `routes/web.php` y determina que controlador debe responder.
-3. El controlador ejecuta la logica necesaria (obtener datos, validar formularios, etc.).
-4. El controlador le pasa los datos a una vista para que se muestre en el navegador.
+3. Si la ruta esta protegida, ejecutan los middlewares (`auth` y `rol`) antes de llegar al controlador.
+4. El controlador ejecuta la logica necesaria (obtener datos, validar formularios, autorizar, etc.).
+5. El controlador le pasa los datos a una vista para que se muestre en el navegador.
 
 #### Archivos del backend
 
 | Archivo | Rol | Como funciona |
 |---|---|---|
-| `routes/web.php` | **Enrutador** | Define que URL activa que controlador. Usa `Route::resource()` para generar automaticamente las 7 rutas CRUD (index, create, store, show, edit, update, destroy) y agrega rutas adicionales para inscripciones |
-| `app/Http/Controllers/EmprendedorController.php` | **Controlador** | Gestiona el CRUD completo de emprendedores conectado a la base de datos. Incluye el metodo `show()` que muestra el detalle del emprendedor con sus programas inscritos |
-| `app/Http/Controllers/ProgramaFormacionController.php` | **Controlador** | Gestiona el CRUD completo de programas de formacion conectado a la base de datos a traves del modelo `ProgramaFormacion` |
-| `app/Http/Controllers/InscripcionController.php` | **Controlador** | Gestiona la inscripcion y cancelacion de inscripciones de emprendedores en programas. Usa la relacion muchos a muchos definida en los modelos |
-| `app/Models/Emprendedor.php` | **Modelo** | Representa la tabla `emprendedores` en la base de datos. Define la relacion muchos a muchos con ProgramaFormacion a traves de la pivote |
-| `app/Models/ProgramaFormacion.php` | **Modelo** | Representa la tabla `programas_formacion`. Define la relacion muchos a muchos con Emprendedor a traves de la pivote |
-| `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | **Migracion** | Crea la tabla `emprendedores` en MySQL con todos sus campos al correr `php artisan migrate` |
-| `database/migrations/2026_04_02_000002_create_programas_formacion_table.php` | **Migracion** | Crea la tabla `programas_formacion` con los campos basicos |
+| `routes/web.php` | **Enrutador** | Define que URL activa que controlador. Las rutas estan agrupadas con middlewares `auth` y `rol:admin\|emprendedor` para restringir el acceso por rol |
+| `bootstrap/app.php` | **Configuracion** | Registra el alias `rol` que permite usar `RolMiddleware` desde las rutas |
+| `app/Http/Middleware/RolMiddleware.php` | **Middleware** | Verifica que el usuario autenticado tenga uno de los roles permitidos por la ruta; en caso contrario aborta con 403 |
+| `app/Http/Controllers/AuthController.php` | **Controlador** | Procesa el login (verificando email, password y rol), el logout y el auto-registro de emprendedor (crea Emprendedor + User en una transaccion) |
+| `app/Http/Controllers/EmprendedorController.php` | **Controlador** | Gestiona el CRUD completo de emprendedores. Incluye el metodo `show()` con sus programas inscritos y la autorizacion para que un emprendedor solo edite su propio registro |
+| `app/Http/Controllers/ProgramaFormacionController.php` | **Controlador** | Gestiona el CRUD completo de programas. El metodo `show()` carga la lista de emprendedores inscritos en el programa |
+| `app/Http/Controllers/InscripcionController.php` | **Controlador** | Gestiona la inscripcion y cancelacion de inscripciones. Verifica que un emprendedor solo opere sobre su propio registro |
+| `app/Http/Controllers/ReporteController.php` | **Controlador** | Construye los datos para el reporte de emprendedores activos y para el reporte de inscripciones por programa |
+| `app/Models/User.php` | **Modelo** | Representa a los usuarios del sistema con su rol y la relacion opcional con un emprendedor |
+| `app/Models/Emprendedor.php` | **Modelo** | Representa la tabla `emprendedores`. Define la relacion muchos a muchos con ProgramaFormacion |
+| `app/Models/ProgramaFormacion.php` | **Modelo** | Representa la tabla `programas_formacion`. Define la relacion muchos a muchos con Emprendedor |
+| `database/migrations/2026_04_02_000001_create_emprendedores_table.php` | **Migracion** | Crea la tabla `emprendedores` |
+| `database/migrations/2026_04_02_000002_create_programas_formacion_table.php` | **Migracion** | Crea la tabla `programas_formacion` |
 | `database/migrations/2026_04_02_000003_create_emprendedor_programa_table.php` | **Migracion** | Crea la tabla pivote para la relacion muchos a muchos |
-| `database/migrations/2026_05_02_000001_add_cupo_maximo_and_estado_to_programas_formacion_table.php` | **Migracion** | Agrega los campos `cupo_maximo` y `estado` a la tabla de programas |
-| `database/migrations/2026_05_02_000002_add_estado_and_unique_to_emprendedor_programa_table.php` | **Migracion** | Agrega el campo `estado` y el indice unico a la tabla pivote |
+| `database/migrations/2026_05_02_000001_add_cupo_maximo_and_estado_to_programas_formacion_table.php` | **Migracion** | Agrega `cupo_maximo` y `estado` a la tabla de programas |
+| `database/migrations/2026_05_02_000002_add_estado_and_unique_to_emprendedor_programa_table.php` | **Migracion** | Agrega `estado` e indice unico a la pivote |
+| `database/migrations/2026_05_18_000001_add_rol_and_emprendedor_id_to_users_table.php` | **Migracion** | Agrega `rol` y `emprendedor_id` a la tabla `users` para soportar autenticacion por roles |
+| `database/seeders/UsuarioSeeder.php` | **Seeder** | Crea el admin por defecto y los usuarios emprendedores asociados a los registros sembrados |
 
 ---
 
@@ -237,38 +313,60 @@ El frontend es la parte del sistema que ve y usa el usuario en el navegador. Se 
 2. Laravel procesa el archivo `.blade.php` y genera HTML puro.
 3. El navegador recibe ese HTML junto con los estilos de Bootstrap y el CSS propio.
 4. Cuando el usuario llena un formulario y hace clic en "Guardar", el navegador envia los datos al backend via POST.
+5. Las vistas usan directivas `@auth` y verificaciones `auth()->user()->esAdmin()` para mostrar u ocultar elementos segun el rol.
 
 #### Archivos del frontend
 
 | Archivo | Rol | Como funciona |
 |---|---|---|
-| `resources/views/layout.blade.php` | **Plantilla base** | Define la estructura comun de todas las paginas: barra de navegacion, encabezado, area de mensajes de exito y pie de pagina. Las demas vistas la extienden con `@extends('layout')` |
-| `resources/views/inicio.blade.php` | **Pagina de inicio** | Vista de bienvenida con la descripcion del proyecto y botones de acceso rapido a las dos secciones principales |
-| `resources/views/emprendedores/index.blade.php` | **Listado** | Muestra todos los emprendedores en una tabla con sus datos. Incluye botones de ver inscripciones, editar y eliminar por cada fila. El boton eliminar usa un formulario con metodo DELETE |
-| `resources/views/emprendedores/create.blade.php` | **Formulario de creacion** | Formulario con todos los campos del emprendedor. Usa `@error` para mostrar mensajes de validacion y `old()` para conservar los valores si el formulario es rechazado |
-| `resources/views/emprendedores/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados con los datos actuales. Usa `@method('PUT')` para simular el metodo HTTP PUT |
-| `resources/views/emprendedores/show.blade.php` | **Detalle e inscripciones** | Muestra los datos del emprendedor en una tarjeta, la tabla de programas inscritos (con boton para cancelar inscripcion) y un formulario para inscribirlo en un programa nuevo |
-| `resources/views/programas/index.blade.php` | **Listado** | Tabla con todos los programas de formacion disponibles, con sus columnas de cupo maximo, estado y botones de editar y eliminar |
-| `resources/views/programas/create.blade.php` | **Formulario de creacion** | Formulario para registrar un nuevo programa con nombre, descripcion, cupo maximo y estado |
-| `resources/views/programas/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados con los datos actuales. Usa `@method('PUT')` |
-| `public/css/estilos.css` | **Estilos propios** | Define que el body ocupe toda la pantalla (`min-height: 100vh`) y que el footer siempre quede al fondo usando Flexbox |
+| `resources/views/layout.blade.php` | **Plantilla base** | Define la estructura comun de todas las paginas. El navbar es dinamico: muestra "Emprendedores" y "Reportes" solo al admin, el saludo con el nombre del usuario y el boton "Cerrar sesion" cuando hay sesion |
+| `resources/views/inicio.blade.php` | **Pagina de inicio** | Vista de bienvenida. Sin sesion ofrece dos botones de inicio de sesion (por rol) y un enlace de registro. Con sesion ofrece accesos rapidos segun el rol del usuario |
+| `resources/views/auth/login.blade.php` | **Login** | Formulario con pestañas para seleccionar el rol (Emprendedor / Administrador) y campos de email y contraseña |
+| `resources/views/auth/register.blade.php` | **Registro emprendedor** | Formulario publico que recoge los datos del emprendedor y crea simultaneamente el registro en `emprendedores` y el usuario en `users` |
+| `resources/views/emprendedores/index.blade.php` | **Listado** | Tabla con todos los emprendedores y acciones de ver detalle, editar y eliminar. Solo accesible al administrador |
+| `resources/views/emprendedores/create.blade.php` | **Formulario de creacion** | Formulario con todos los campos del emprendedor. Usa `@error` para mostrar mensajes de validacion y `old()` para conservar valores |
+| `resources/views/emprendedores/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados. El campo "Estado" se muestra unicamente al administrador. Usa `@method('PUT')` |
+| `resources/views/emprendedores/show.blade.php` | **Detalle e inscripciones** | Datos del emprendedor, tabla de programas inscritos (con boton para cancelar inscripcion) y tabla de programas disponibles con boton "Inscribirse" |
+| `resources/views/programas/index.blade.php` | **Listado publico** | Tabla con todos los programas. El boton "Ver inscritos" se muestra a usuarios autenticados; "Nuevo Programa", "Editar" y "Eliminar" solo al administrador |
+| `resources/views/programas/create.blade.php` | **Formulario de creacion** | Formulario para registrar un programa con nombre, descripcion, cupo maximo y estado |
+| `resources/views/programas/edit.blade.php` | **Formulario de edicion** | Igual al de creacion pero los campos vienen pre-cargados. Usa `@method('PUT')` |
+| `resources/views/programas/show.blade.php` | **Detalle e inscritos** | Datos del programa y tabla con los emprendedores inscritos, fecha y estado de cada inscripcion |
+| `resources/views/reportes/index.blade.php` | **Portada de reportes** | Tarjetas con accesos al reporte de emprendedores activos y al reporte de inscripciones por programa |
+| `resources/views/reportes/emprendedores_activos.blade.php` | **Reporte 1** | Listado tabular de emprendedores activos con boton "Imprimir / PDF" (`window.print()`) y encabezado institucional para impresion |
+| `resources/views/reportes/inscripciones_programa.blade.php` | **Reporte 2** | Detalle por programa con la cantidad de inscritos, sus datos y boton "Imprimir / PDF" |
+| `public/css/estilos.css` | **Estilos propios** | Estilos del proyecto. Incluye un bloque `@media print` que oculta navbar, footer y botones marcados con `.no-print`, y revela el encabezado `.reporte-encabezado` solo al imprimir |
 
 ---
 
 ## Paginas de la aplicacion
 
-| URL | Descripcion |
-|---|---|
-| `/` | Pagina de inicio |
-| `/emprendedores` | Listado de emprendedores |
-| `/emprendedores/create` | Formulario para registrar emprendedor |
-| `/emprendedores/{id}` | Detalle del emprendedor con sus programas inscritos y formulario para inscribirlo en uno nuevo |
-| `/emprendedores/{id}/edit` | Formulario para editar emprendedor |
-| `/programas` | Listado de programas de formacion |
-| `/programas/create` | Formulario para crear programa |
-| `/programas/{id}/edit` | Formulario para editar programa |
-| `POST /emprendedores/{id}/inscripciones` | Inscribe al emprendedor en un programa de formacion |
-| `DELETE /emprendedores/{id}/inscripciones/{programa}` | Cancela la inscripcion del emprendedor en un programa |
+| URL | Metodo | Rol requerido | Descripcion |
+|---|---|---|---|
+| `/` | GET | publico | Pagina de inicio |
+| `/login` | GET | publico | Formulario de inicio de sesion (pestañas Emprendedor / Administrador) |
+| `/login` | POST | publico | Procesa el inicio de sesion |
+| `/logout` | POST | autenticado | Cierra la sesion del usuario |
+| `/registro` | GET | publico | Formulario de auto-registro para emprendedores |
+| `/registro` | POST | publico | Crea el emprendedor y el usuario asociado |
+| `/programas` | GET | publico | Listado de programas de formacion |
+| `/programas/{id}` | GET | autenticado | Detalle del programa con sus emprendedores inscritos |
+| `/programas/create` | GET | admin | Formulario para crear programa |
+| `/programas` | POST | admin | Guarda el nuevo programa |
+| `/programas/{id}/edit` | GET | admin | Formulario para editar programa |
+| `/programas/{id}` | PUT | admin | Actualiza el programa |
+| `/programas/{id}` | DELETE | admin | Elimina el programa |
+| `/emprendedores` | GET | admin | Listado de emprendedores |
+| `/emprendedores/create` | GET | admin | Formulario para registrar emprendedor |
+| `/emprendedores` | POST | admin | Guarda el nuevo emprendedor |
+| `/emprendedores/{id}` | GET | admin o dueño | Detalle del emprendedor con sus programas inscritos y formulario para inscribirlo en uno nuevo |
+| `/emprendedores/{id}/edit` | GET | admin o dueño | Formulario para editar emprendedor |
+| `/emprendedores/{id}` | PUT | admin o dueño | Actualiza el emprendedor (el campo `estado` solo aplica si lo modifica el admin) |
+| `/emprendedores/{id}` | DELETE | admin | Elimina el emprendedor |
+| `/emprendedores/{id}/inscripciones` | POST | admin o dueño | Inscribe al emprendedor en un programa |
+| `/emprendedores/{id}/inscripciones/{programa}` | DELETE | admin o dueño | Cancela la inscripcion del emprendedor en un programa |
+| `/reportes` | GET | admin | Portada del modulo de reportes |
+| `/reportes/emprendedores-activos` | GET | admin | Reporte de emprendedores activos |
+| `/reportes/inscripciones` | GET | admin | Reporte de inscripciones por programa |
 
 ---
 
@@ -276,8 +374,10 @@ El frontend es la parte del sistema que ve y usa el usuario en el navegador. Se 
 
 - **Laravel 13** - Framework PHP
 - **Bootstrap 5.3.3** - Framework CSS para la interfaz
+- **Bootstrap Icons 1.11.3** - Iconografia (botones y footer)
 - **Vite 8** - Herramienta de compilacion de assets
 - **PHP 8.3+**
+- **MySQL** - Base de datos relacional
 
 ---
 

@@ -17,6 +17,19 @@ class ProgramaFormacionController extends Controller
         return view('programas.index', compact('programas'));
     }
 
+    // Muestra el detalle de un programa junto con los emprendedores inscritos.
+    // Corresponde a la ruta GET /programas/{id}
+    public function show($id)
+    {
+        // Carga el programa con sus emprendedores inscritos en una sola consulta
+        $programa = ProgramaFormacion::with('emprendedores')->findOrFail($id);
+
+        // Conteo de inscritos para mostrar disponibilidad
+        $totalInscritos = $programa->emprendedores->count();
+
+        return view('programas.show', compact('programa', 'totalInscritos'));
+    }
+
     // Muestra el formulario para registrar un nuevo programa de formación.
     // Corresponde a la ruta GET /programas/create
     public function create()

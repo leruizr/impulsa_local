@@ -2,10 +2,14 @@
 @extends('layout')
 
 @section('content')
-{{-- Encabezado con el título y el botón para crear un nuevo programa --}}
+{{-- Encabezado con el título y el botón para crear un nuevo programa (solo admin) --}}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="page-title">Programas de Formación</h2>
-    <a href="{{ route('programas.create') }}" class="btn-marca-primary">Nuevo Programa</a>
+    @auth
+        @if(auth()->user()->esAdmin())
+            <a href="{{ route('programas.create') }}" class="btn-marca-primary">Nuevo Programa</a>
+        @endif
+    @endauth
 </div>
 
 {{-- Tabla envuelta en un wrapper con bordes redondeados y sombra --}}
@@ -39,15 +43,24 @@
                     <td>
                         {{-- Los botones de acción se mantienen en línea horizontal --}}
                         <div class="d-flex gap-2">
-                            {{-- Botón para ir al formulario de edición --}}
-                            <a href="{{ route('programas.edit', $programa->id) }}" class="btn-marca-secondary btn-marca-sm">Editar</a>
+                            {{-- Botón para ver inscritos: disponible para usuarios autenticados --}}
+                            @auth
+                                <a href="{{ route('programas.show', $programa->id) }}" class="btn-marca-secondary btn-marca-sm">Ver inscritos</a>
+                            @endauth
 
-                            {{-- Formulario de eliminación: usa método DELETE con confirmación previa --}}
-                            <form action="{{ route('programas.destroy', $programa->id) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-marca-danger btn-marca-sm" onclick="return confirm('¿Está seguro de eliminar este programa?')">Eliminar</button>
-                            </form>
+                            {{-- Edición y eliminación solo para administradores --}}
+                            @auth
+                                @if(auth()->user()->esAdmin())
+                                    <a href="{{ route('programas.edit', $programa->id) }}" class="btn-marca-secondary btn-marca-sm">Editar</a>
+
+                                    {{-- Formulario de eliminación: usa método DELETE con confirmación previa --}}
+                                    <form action="{{ route('programas.destroy', $programa->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-marca-danger btn-marca-sm" onclick="return confirm('¿Está seguro de eliminar este programa?')">Eliminar</button>
+                                    </form>
+                                @endif
+                            @endauth
                         </div>
                     </td>
                 </tr>

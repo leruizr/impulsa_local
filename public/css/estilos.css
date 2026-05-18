@@ -402,3 +402,53 @@ main {
         padding: 0.7rem 1.5rem;
     }
 }
+
+/* =====================================================
+   Encabezado institucional de los reportes
+   ===================================================== */
+.reporte-encabezado {
+    display: none;
+    border-bottom: 2px solid var(--azul-marca, #1e3a8a);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+}
+.reporte-encabezado h3 {
+    font-weight: 700;
+}
+
+/* =====================================================
+   Estilos para impresión (window.print / Guardar como PDF)
+   - Oculta navbar, footer y botones de acción
+   - Muestra el encabezado institucional del reporte
+   - Asegura saltos de página razonables entre bloques
+   ===================================================== */
+@media print {
+    .navbar-marca,
+    .footer-marca,
+    .no-print {
+        display: none !important;
+    }
+
+    main.container {
+        padding: 0 !important;
+    }
+
+    .reporte-encabezado {
+        display: block;
+    }
+
+    .tabla-wrapper,
+    .info-card {
+        box-shadow: none !important;
+        border: 1px solid #d8d8d8 !important;
+    }
+
+    .reporte-bloque {
+        page-break-inside: avoid;
+    }
+
+    a {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+}

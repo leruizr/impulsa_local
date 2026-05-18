@@ -73,6 +73,10 @@ class EmprendedorController extends Controller
     {
         // findOrFail lanza un error 404 automaticamente si el ID no existe
         $emprendedor = Emprendedor::findOrFail($id);
+
+        // Un emprendedor solo puede editar su propio perfil; el admin puede editar cualquiera.
+        $this->autorizarAccesoAlEmprendedor($emprendedor);
+
         return view('emprendedores.edit', compact('emprendedor'));
     }
 
@@ -80,24 +84,52 @@ class EmprendedorController extends Controller
     // Corresponde a la ruta PUT /emprendedores/{id}
     public function update(Request $request, $id)
     {
-        // Aplica las mismas reglas de validacion que en el registro
-        $request->validate([
+        // Busca el emprendedor y verifica el permiso antes de validar
+        $emprendedor = Emprendedor::findOrFail($id);
+        $this->autorizarAccesoAlEmprendedor($emprendedor);
+
+        // Reglas base; el estado solo lo puede modificar el admin
+        $reglas = [
             'nombre'              => 'required|string|max:255',
             'actividad_economica' => 'required|in:artesano,panadería,taller,tienda,otro',
             'ubicacion'           => 'required|string|max:255',
             'telefono'            => 'required|string|max:20',
             'email'               => 'required|email|max:255',
-            'estado'              => 'required|in:activo,inactivo',
-        ]);
+        ];
+        if (auth()->check() && auth()->user()->esAdmin()) {
+            $reglas['estado'] = 'required|in:activo,inactivo';
+        }
 
-        // Busca el emprendedor y actualiza sus datos en la base de datos
-        $emprendedor = Emprendedor::findOrFail($id);
-        $emprendedor->update($request->only([
-            'nombre', 'actividad_economica', 'ubicacion', 'telefono', 'email', 'estado'
-        ]));
+        $datos = $request->validate($reglas);
+
+        $emprendedor->update($datos);
+
+        // Si el emprendedor edita su propio perfil, vuelve a su detalle.
+        // Si es el admin, vuelve al listado completo.
+        if (auth()->check() && auth()->user()->esEmprendedor()) {
+            return redirect()->route('emprendedores.show', $emprendedor->id)
+                ->with('success', 'Tus datos fueron actualizados exitosamente.');
+        }
 
         return redirect()->route('emprendedores.index')
             ->with('success', 'Emprendedor actualizado exitosamente.');
+    }
+
+    // Verifica que el usuario autenticado pueda operar sobre este emprendedor.
+    // Admin: siempre. Emprendedor: solo si es su propio registro.
+    protected function autorizarAccesoAlEmprendedor(Emprendedor $emprendedor): void
+    {
+        $usuario = auth()->user();
+        if (! $usuario) {
+            abort(403);
+        }
+        if ($usuario->esAdmin()) {
+            return;
+        }
+        if ($usuario->esEmprendedor() && $usuario->emprendedor_id === $emprendedor->id) {
+            return;
+        }
+        abort(403, 'No tiene permiso para acceder a este emprendedor.');
     }
 
     // Elimina el emprendedor de la base de datos.

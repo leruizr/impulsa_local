@@ -15,6 +15,9 @@ class InscripcionController extends Controller
     // Corresponde a la ruta POST /emprendedores/{emprendedor}/inscripciones
     public function store(Request $request, Emprendedor $emprendedor)
     {
+        // Un emprendedor solo puede inscribirse a sí mismo; el admin puede inscribir a cualquiera.
+        $this->autorizarOperacionSobreEmprendedor($emprendedor);
+
         // Valida que el programa exista y que el emprendedor no este ya inscrito en el
         $request->validate([
             'programa_formacion_id' => [
@@ -44,10 +47,30 @@ class InscripcionController extends Controller
     // Corresponde a la ruta DELETE /emprendedores/{emprendedor}/inscripciones/{programa}
     public function destroy(Emprendedor $emprendedor, ProgramaFormacion $programa)
     {
+        // Un emprendedor solo puede cancelar sus propias inscripciones; el admin puede cancelar cualquiera.
+        $this->autorizarOperacionSobreEmprendedor($emprendedor);
+
         // detach elimina el registro correspondiente en la tabla pivote
         $emprendedor->programasFormacion()->detach($programa->id);
 
         return redirect()->route('emprendedores.show', $emprendedor->id)
             ->with('success', 'Inscripción cancelada exitosamente.');
+    }
+
+    // Verifica que el usuario autenticado pueda operar sobre este emprendedor.
+    // Admin: siempre. Emprendedor: solo si es su propio registro.
+    protected function autorizarOperacionSobreEmprendedor(Emprendedor $emprendedor): void
+    {
+        $usuario = auth()->user();
+        if (! $usuario) {
+            abort(403);
+        }
+        if ($usuario->esAdmin()) {
+            return;
+        }
+        if ($usuario->esEmprendedor() && $usuario->emprendedor_id === $emprendedor->id) {
+            return;
+        }
+        abort(403, 'No tiene permiso para gestionar las inscripciones de este emprendedor.');
     }
 }

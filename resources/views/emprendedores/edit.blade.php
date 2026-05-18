@@ -65,21 +65,29 @@
             @enderror
         </div>
 
-        {{-- Campo: Estado del emprendedor (marca la opción actual como seleccionada) --}}
-        <div class="mb-4">
-            <label for="estado" class="form-label">Estado</label>
-            <select class="form-select @error('estado') is-invalid @enderror" id="estado" name="estado" required>
-                <option value="activo" {{ old('estado', $emprendedor->estado) == 'activo' ? 'selected' : '' }}>Activo</option>
-                <option value="inactivo" {{ old('estado', $emprendedor->estado) == 'inactivo' ? 'selected' : '' }}>Inactivo</option>
-            </select>
-            @error('estado')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
+        {{-- El estado solo puede ser modificado por el administrador --}}
+        @auth
+            @if(auth()->user()->esAdmin())
+                <div class="mb-4">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select class="form-select @error('estado') is-invalid @enderror" id="estado" name="estado" required>
+                        <option value="activo" {{ old('estado', $emprendedor->estado) == 'activo' ? 'selected' : '' }}>Activo</option>
+                        <option value="inactivo" {{ old('estado', $emprendedor->estado) == 'inactivo' ? 'selected' : '' }}>Inactivo</option>
+                    </select>
+                    @error('estado')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            @endif
+        @endauth
 
-        {{-- Botones: Cancelar regresa al listado, Actualizar envía el formulario --}}
+        {{-- Botones: Cancelar regresa al listado (admin) o al perfil del emprendedor (rol emprendedor) --}}
         <div class="d-flex gap-2">
-            <a href="{{ route('emprendedores.index') }}" class="btn-marca-secondary">Cancelar</a>
+            @if(auth()->check() && auth()->user()->esEmprendedor())
+                <a href="{{ route('emprendedores.show', $emprendedor->id) }}" class="btn-marca-secondary">Cancelar</a>
+            @else
+                <a href="{{ route('emprendedores.index') }}" class="btn-marca-secondary">Cancelar</a>
+            @endif
             <button type="submit" class="btn-marca-primary">Actualizar</button>
         </div>
     </form>
